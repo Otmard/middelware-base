@@ -19,16 +19,13 @@ async def app_exception_handler(request: Request, exc: AppException):
             "path": request.url.path,
             "method": request.method,
             "code": error.code,
-            "status": error.status
-        }
+            "status": error.status,
+        },
     )
 
     return JSONResponse(
-        status_code=error.status,
-        content={
-            "code": error.code,
-            "message": error.message
-        }
+        status_code=exc.error.status,
+        content={"code": exc.error.code, "message": exc.error.message},
     )
 
 
@@ -38,16 +35,10 @@ async def global_exception_handler(request: Request, exc: Exception):
     logger.error(
         "unexpected error",
         exc_info=True,
-        extra={
-            "path": request.url.path,
-            "code": err.code
-        }
+        extra={"path": request.url.path, "code": err.code},
     )
 
     return JSONResponse(
         status_code=err.status,
-        content={
-            "code": err.code,
-            "message": err.message
-        }
+        content={"code": exc.error.code, "message": exc.error.message},
     )

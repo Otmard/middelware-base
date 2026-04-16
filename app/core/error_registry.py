@@ -2,6 +2,8 @@
 
 from dataclasses import dataclass
 
+from app.schemas.error import ErrorResponse
+
 @dataclass(frozen=True)
 class ErrorDetail:
     code: str
@@ -61,3 +63,22 @@ class ErrorRegistry:
         status=502,
         message="Odoo connection failed"
     )
+    
+def build_error_responses(*errors):
+    responses = {}
+
+    for err in errors:
+        responses[err.status] = {
+            "model": ErrorResponse,
+            "description": err.message,
+            "content": {
+                "application/json": {
+                    "example": {
+                        "code": err.code,
+                        "message": err.message
+                    }
+                }
+            }
+        }
+
+    return responses
