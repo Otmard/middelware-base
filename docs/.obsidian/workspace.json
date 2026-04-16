@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Planeación de endpoints.md",
+                "file": "clientes.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Planeación de endpoints"
+              "title": "clientes"
             }
           }
         ]
@@ -94,7 +94,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "Planeación de endpoints.md",
+                "file": "clientes.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -104,7 +104,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Enlaces entrantes de Planeación de endpoints"
+              "title": "Enlaces entrantes de clientes"
             }
           },
           {
@@ -113,12 +113,12 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "Planeación de endpoints.md",
+                "file": "clientes.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "Enlaces salientes de Planeación de endpoints"
+              "title": "Enlaces salientes de clientes"
             }
           },
           {
@@ -156,13 +156,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Planeación de endpoints.md",
+                "file": "clientes.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Esquema de Planeación de endpoints"
+              "title": "Esquema de clientes"
             }
           }
         ]
@@ -184,5 +184,9 @@
     }
   },
   "active": "7006b02711629ad5",
-  "lastOpenFiles": []
+  "lastOpenFiles": [
+    "clientes.md",
+    "Planeación de endpoints.md",
+    "cliente.md"
+  ]
 }

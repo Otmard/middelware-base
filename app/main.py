@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from app.core.config import settings
 from app.core.logger import setup_logging
 from app.core.middleware import logging_middleware
-from app.routes import user
+from app.routes import user, cliente
 from app.schemas.error import ErrorResponse
 
 app = FastAPI(
@@ -57,6 +57,7 @@ logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
 # middleware
 app.middleware("http")(logging_middleware)
 app.include_router(user.router)
+app.include_router(cliente.router)
 # handlers globales
 
 app.add_exception_handler(AppException, app_exception_handler)

@@ -26,8 +26,18 @@ Este servicio permite consultar información de un cliente mediante un código d
 
 | Parámetro        | Descripción               | Tipo   | Tamaño |
 | ---------------- | ------------------------- | ------ | ------ |
-| CodServicio      | Código del servicio       | String | 3      |
+| CodServicio      | Código del servicio/búsqueda | String | 3      |
 | CodigoBusqueda   | Código único del cliente  | String | 14     |
+
+### Léxico de Códigos de Servicio (CodServicio)
+
+| Código | Tipo de Búsqueda                          | Modelo Odoo       | Campo           |
+| ------ | ----------------------------------------- | ----------------- | --------------- |
+| 001    | Buscar por ID del partner                 | res.partner       | id              |
+| 002    | Buscar por VAT (identificación fiscal)     | res.partner       | vat             |
+| 003    | Buscar lead por partner_id y obtener datos | crm.lead          | partner_id      |
+
+**Nota:** Para código 003, se busca el lead relacionado al partner y se retornan los datos del partner asociado.
 
 ### Ejemplo de Solicitud
 
@@ -218,3 +228,7 @@ Se presenta cuando el cliente existe y la deuda está compuesta por múltiples f
 2. **Límite de registros**: Si `Pagos` contiene muchos registros, considerar paginación.
 3. **Moneda**: Asumir decimales con separador de punto (formato JSON estándar).
 4. **Timezone**: Las fechas están en formato ISO (AAAAMMDD), sin hora.
+5. **CodServicio como switch**: El campo `CodServicio` determina el tipo de búsqueda en Odoo:
+   - `001`: Busca partner por `id`
+   - `002`: Busca partner por `vat`
+   - `003`: Busca en `crm.lead` por `partner_id` y retorna datos del partner asociado

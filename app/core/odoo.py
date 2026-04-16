@@ -4,14 +4,12 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
-from app.core.config import settings
 
-# Asumo que tienes un módulo settings con ODOO_URL, ODOO_DB, ODOO_USERNAME, ODOO_PASSWORD
-# from myproject import settings
+from app.core.config import settings
+from app.core.exceptions import AppException
 
 
 class OdooJSONRPCError(Exception):
-    """Excepción custom para errores de JSON-RPC de Odoo."""
     pass
 
 class OdooJsonRpcClient:
@@ -244,59 +242,19 @@ def get_odoo_connection_json() -> OdooJsonRpcClient:
     return client
 
 
-def get_odoo_connection_json_user_id(
-    id: Optional[str] = None,
+def get_odoo_connection(
+    username: Optional[str] = None,
+    password: Optional[str] = None,
 ) -> OdooJsonRpcClient:
-    usuarios = {
-        "26bg43sshtze": {
-            "username": "aillanes@maplenet.com.bo",
-            "password": "k}'H^Wi3g+96]%*",
-        },
-        "1079": {
-            "username": "steran@maplenet.com.bo",
-            "password": "123qweASD",
-        },
-        "1491": {
-            "username": "eovando@maplenet.com.bo",
-            "password": "123qweASD",
-        },
-    }
-
-    if id and id in usuarios:
-        username = usuarios[id]["username"]
-        password = usuarios[id]["password"]
-    else:
-        username = settings.ODOO_USERNAME
-        password = settings.ODOO_PASSWORD
-
     client = OdooJsonRpcClient(
         url=settings.ODOO_URL,
         db=settings.ODOO_DB,
-        username=username,
-        password=password,
+        username=username or settings.ODOO_USERNAME,
+        password=password or settings.ODOO_PASSWORD,
     )
-
     client.authenticate()
     return client
 
 
 # --- Ejemplo de función equivalente a execute_odoo_method pero usando JSON-RPC ---
-def execute_odoo_method_json(
-    client: OdooJsonRpcClient,
-    model: str,
-    method: str,
-    args: Optional[Union[List[Any], Tuple[Any, ...]]] = None,
-    kwargs: Optional[Dict[str, Any]] = None,
-):
-    """
-    Ejecuta un método en Odoo usando JSON-RPC (compatibilidad con execute_odoo_method previa).
-    """
-    return client.execute_kw(model, args=args or [], kwargs=kwargs or {})
 
-
-# --- Ejemplo de uso ---
-# if __name__ == "__main__":
-# client = get_odoo_connection_json()  # descomenta y usa settings
-# partners = client.model("res.partner").search_read([["is_company", "=", True]], {"fields": ["id", "name"], "limit": 5})
-# print(partners)
-# pass

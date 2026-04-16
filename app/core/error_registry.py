@@ -63,6 +63,19 @@ class ErrorRegistry:
         status=502,
         message="Odoo connection failed"
     )
+
+    # Cliente
+    CLIENTE_NOT_FOUND = ErrorDetail(
+        code="CLIENTE_NOT_FOUND",
+        status=404,
+        message="Cliente no encontrado"
+    )
+
+    CLIENTE_INVALID_PARAMS = ErrorDetail(
+        code="CLIENTE_INVALID_PARAMS",
+        status=400,
+        message="Parámetros inválidos"
+    )
     
 def build_error_responses(*errors):
     responses = {}
