@@ -15,6 +15,7 @@ app = FastAPI(
 )
 
 from fastapi.openapi.utils import get_openapi
+from app.schemas.cliente import StandardResponse
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -40,16 +41,8 @@ def custom_openapi():
         routes=app.routes,
     )
 
-    # 🧠 FORZAR esquema de respuesta global estandarizada
-    openapi_schema["components"]["schemas"]["StandardResponse"] = {
-        "type": "object",
-        "properties": {
-            "code": {"type": "string", "description": "Código de respuesta"},
-            "message": {"type": "string", "description": "Mensaje descriptivo"},
-            "data": {"type": "object", "description": "Datos de respuesta", "nullable": True}
-        },
-        "required": ["code", "message"]
-    }
+    # La respuesta se toma automáticamente del response_model de cada endpoint
+    # El ejemplo viene del model_config de cada response model específico
 
     app.openapi_schema = openapi_schema
     return app.openapi_schema
