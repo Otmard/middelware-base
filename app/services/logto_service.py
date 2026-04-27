@@ -1,3 +1,4 @@
+import asyncio
 import time
 import httpx
 from typing import Optional, Dict, Any
@@ -7,6 +8,7 @@ from app.core.exceptions import AppException
 from app.core.logger import get_logger
 from app.core.error_registry import ErrorRegistry
 from app.core.config import settings
+from app.core.redis import get_redis
 
 from app.schemas.logto_user_schema import (
     UserLogtoCreateSchema,
@@ -28,69 +30,85 @@ class LogtoClient:
     # =========================
     # TOKEN
     # =========================
+
     async def _get_token(self) -> str:
         redis = await get_redis()
 
-        token_key = "logto_access_token"
-        expire_key = "logto_access_token_expire"
+        token_key = "logto:access_token"
+        lock_key = "logto:token_lock"
 
-        now = int(time.time())
+        async def fetch_token():
+            logger.info("Solicitando nuevo token a Logto")
 
-        token = await redis.get(token_key)
-        expire = await redis.get(expire_key)
+            try:
+                response = await self.client.post(
+                    f"{self.base_url}/oidc/token",
+                    auth=(self.app_id, self.app_secret),
+                    data={
+                        "grant_type": "client_credentials",
+                        "scope": "all",
+                        "resource": settings.LOGTO_BASE_RESOURCE,
+                    },
+                    headers={"Content-Type": "application/x-www-form-urlencoded"},
+                )
 
-        if token and expire and now < int(expire):
-            return token.decode() if isinstance(token, bytes) else token
+                response.raise_for_status()
+                payload = response.json()
 
-        # 🔒 lock simple para evitar múltiples requests
-        lock = await redis.set("logto_token_lock", "1", nx=True, ex=5)
+            except httpx.HTTPStatusError as e:
+                logger.error(
+                    "Error HTTP obteniendo token",
+                    extra={"status": e.response.status_code},
+                )
+                raise AppException(ErrorRegistry.EXTERNAL_SERVICE_ERROR)
 
-        if not lock:
-            logger.info("Esperando token existente")
-            await asyncio.sleep(1)
-            token = await redis.get(token_key)
-            if token:
-                return token.decode() if isinstance(token, bytes) else token
+            except httpx.RequestError:
+                logger.error("Error de conexión con Logto")
+                raise AppException(ErrorRegistry.EXTERNAL_SERVICE_ERROR)
 
-        logger.info("Solicitando nuevo token a Logto")
+            access_token = payload.get("access_token")
+            expires_in = payload.get("expires_in")
 
-        try:
-            response = await self.client.post(
-                f"{self.base_url}/oidc/token",
-                auth=(self.app_id, self.app_secret),
-                data={
-                    "grant_type": "client_credentials",
-                    "scope": "all",
-                    "resource": settings.LOGTO_BASE_RESOURCE,
-                },
-                headers={"Content-Type": "application/x-www-form-urlencoded"},
-            )
+            if not access_token or not expires_in:
+                logger.error("Respuesta inválida de Logto", extra={"payload": payload})
+                raise AppException(ErrorRegistry.EXTERNAL_SERVICE_ERROR)
 
-            response.raise_for_status()
-            payload = response.json()
+            ttl = expires_in - 30  # buffer de seguridad
 
-        except httpx.HTTPStatusError as e:
-            logger.error("Error HTTP obteniendo token", extra={"status": e.response.status_code})
-            raise AppException(ErrorRegistry.EXTERNAL_SERVICE_ERROR)
+            return {"token": access_token, "ttl": ttl}
 
-        except httpx.RequestError:
-            logger.error("Error de conexión con Logto")
-            raise AppException(ErrorRegistry.EXTERNAL_SERVICE_ERROR)
+        # 🔥 1. intentar cache
+        cached = await redis.get_json(token_key)
+        if cached:
+            return cached["token"]
 
-        access_token = payload.get("access_token")
-        expires_in = payload.get("expires_in")
+        # 🔒 2. intentar lock
+        lock = await redis.acquire_lock(lock_key, ttl=5)
 
-        if not access_token or not expires_in:
-            logger.error("Respuesta inválida de Logto", extra={"payload": payload})
-            raise AppException(ErrorRegistry.EXTERNAL_SERVICE_ERROR)
+        if lock:
+            try:
+                result = await fetch_token()
 
-        ttl = expires_in - 30
-        expire_ts = now + ttl
+                await redis.set_json(
+                    token_key, {"token": result["token"]}, ex=result["ttl"]
+                )
 
-        await redis.set(token_key, access_token, ex=ttl)
-        await redis.set(expire_key, expire_ts, ex=ttl)
+                return result["token"]
 
-        return access_token
+            finally:
+                await redis.release_lock(lock_key)
+
+        # ⏳ 3. esperar a que otro proceso lo genere
+        logger.info("Esperando token generado por otro proceso")
+
+        for _ in range(5):
+            await asyncio.sleep(0.5)
+            cached = await redis.get_json(token_key)
+            if cached:
+                return cached["token"]
+
+        logger.error("Timeout esperando token en Redis")
+        raise AppException(ErrorRegistry.EXTERNAL_SERVICE_ERROR)
 
     async def _headers(self) -> Dict[str, str]:
         token = await self._get_token()
@@ -118,7 +136,9 @@ class LogtoClient:
             logger.error("Error creando usuario", extra={"error": str(e)})
             raise AppException(ErrorRegistry.EXTERNAL_SERVICE_ERROR)
 
-    async def update_user(self, user_id: str, data: UserLogtoUpdateSchema) -> Dict[str, Any]:
+    async def update_user(
+        self, user_id: str, data: UserLogtoUpdateSchema
+    ) -> Dict[str, Any]:
         logger.info("Actualizando usuario", extra={"user_id": user_id})
 
         try:
@@ -131,7 +151,10 @@ class LogtoClient:
             return response.json()
 
         except Exception as e:
-            logger.error("Error actualizando usuario", extra={"user_id": user_id, "error": str(e)})
+            logger.error(
+                "Error actualizando usuario",
+                extra={"user_id": user_id, "error": str(e)},
+            )
             raise AppException(ErrorRegistry.EXTERNAL_SERVICE_ERROR)
 
     async def delete_user(self, user_id: str) -> Dict[str, Any]:
@@ -146,7 +169,9 @@ class LogtoClient:
             return {"message": f"Usuario {user_id} eliminado"}
 
         except Exception as e:
-            logger.error("Error eliminando usuario", extra={"user_id": user_id, "error": str(e)})
+            logger.error(
+                "Error eliminando usuario", extra={"user_id": user_id, "error": str(e)}
+            )
             raise AppException(ErrorRegistry.EXTERNAL_SERVICE_ERROR)
 
     async def update_password(self, user_id: str, password: str):
@@ -162,7 +187,10 @@ class LogtoClient:
             return response.json()
 
         except Exception as e:
-            logger.error("Error actualizando password", extra={"user_id": user_id, "error": str(e)})
+            logger.error(
+                "Error actualizando password",
+                extra={"user_id": user_id, "error": str(e)},
+            )
             raise AppException(ErrorRegistry.EXTERNAL_SERVICE_ERROR)
 
     # =========================
@@ -181,14 +209,19 @@ class LogtoClient:
             return response.json()
 
         except Exception as e:
-            logger.error("Error asignando rol", extra={"user_id": user_id, "error": str(e)})
+            logger.error(
+                "Error asignando rol", extra={"user_id": user_id, "error": str(e)}
+            )
             raise AppException(ErrorRegistry.EXTERNAL_SERVICE_ERROR)
 
     # =========================
     # ORGANIZATIONS
     # =========================
     async def add_user_to_organization(self, user_id: str, organization_id: str):
-        logger.info("Agregando usuario a organización", extra={"user_id": user_id, "org": organization_id})
+        logger.info(
+            "Agregando usuario a organización",
+            extra={"user_id": user_id, "org": organization_id},
+        )
 
         try:
             headers = await self._headers()
@@ -239,5 +272,7 @@ class LogtoClient:
             return users[0] if users else None
 
         except Exception as e:
-            logger.error("Error buscando usuario", extra={"email": email, "error": str(e)})
+            logger.error(
+                "Error buscando usuario", extra={"email": email, "error": str(e)}
+            )
             raise AppException(ErrorRegistry.EXTERNAL_SERVICE_ERROR)

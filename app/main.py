@@ -5,14 +5,29 @@ from fastapi import FastAPI
 from app.core.config import settings
 from app.core.logger import setup_logging
 from app.core.middleware import logging_middleware
-from app.routes import user, cliente
+from app.routes import test_auth_router, user, cliente
 from app.schemas.error import ErrorResponse
+from contextlib import asynccontextmanager
+from app.core.redis import redis_client
 
 app = FastAPI(
     title=settings.APP_NAME
 )
 
 from fastapi.openapi.utils import get_openapi
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # 🔥 STARTUP
+    await redis_client.connect()
+
+    yield
+
+    # 🔥 SHUTDOWN
+    await redis_client.disconnect()
+
+
+app = FastAPI(lifespan=lifespan)
 
 def custom_openapi():
     if app.openapi_schema:
@@ -58,6 +73,7 @@ logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
 app.middleware("http")(logging_middleware)
 app.include_router(user.router)
 app.include_router(cliente.router)
+app.include_router(test_auth_router.router)
 # handlers globales
 
 app.add_exception_handler(AppException, app_exception_handler)

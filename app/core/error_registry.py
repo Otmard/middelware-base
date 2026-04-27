@@ -83,6 +83,17 @@ class ErrorRegistry:
         message="Error de conexión con servicio externo"
     )
     
+    REDIS_CONNECTION_FAILED = ErrorDetail(
+        code="REDIS_CONNECTION_FAILED",
+        status=502,
+        message="Error de conexión con Redis"
+    )
+    REDIS_OPERATION_FAILED = ErrorDetail(
+    code="REDIS_OPERATION_FAILED",
+    status=500,
+    message="Error en operación con Redis"
+)
+    
 def build_error_responses(*errors):
     responses = {}
 
