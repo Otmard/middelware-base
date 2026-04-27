@@ -232,3 +232,13 @@ Se presenta cuando el cliente existe y la deuda está compuesta por múltiples f
    - `001`: Busca partner por `id`
    - `002`: Busca partner por `vat`
    - `003`: Busca en `crm.lead` por `partner_id` y retorna datos del partner asociado
+
+
+
+```txt
+Typst           9 hrs 55 mins   🟩🟩🟩🟩🟨⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜   18.30 %
+Markdown        7 hrs 26 mins   🟩🟩🟩🟨⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜   13.73 %
+Vue             6 hrs 44 mins   🟩🟩🟩⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜   12.45 %
+Shell           6 hrs 20 mins   🟩🟩🟩⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜   11.68 %
+Typescript      5 hrs 54 mins   🟩🟩🟨⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜   10.90 %
+```

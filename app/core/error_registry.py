@@ -77,6 +77,12 @@ class ErrorRegistry:
         message="Parámetros inválidos"
     )
     
+    EXTERNAL_SERVICE_ERROR = ErrorDetail(
+        code="EXTERNAL_SERVICE_ERROR",
+        status=502,
+        message="Error de conexión con servicio externo"
+    )
+    
 def build_error_responses(*errors):
     responses = {}
 

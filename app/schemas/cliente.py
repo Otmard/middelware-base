@@ -23,12 +23,12 @@ class ClienteRequest(BaseModel):
 
 
 class Pago(BaseModel):
-    NumeroCuota: int = Field(..., description="ID del periodo/factura")
-    DetalleCuota: str = Field(..., description="Descripción")
-    FechaVencimiento: str = Field(..., description="Fecha límite de pago (AAAAMMDD)")
+    NumeroCuota: int = Field(..., description="Correlativo de la cuota")
+    DetalleCuota: str = Field(..., description="Descripción de la cuota/factura")
+    FechaVencimiento: Optional[str] = Field(None, description="Fecha límite de pago (AAAAMMDD)")
     ImporteCuota: Decimal = Field(..., decimal_places=2, description="Monto total de la cuota")
-    ImporteMinimoCuota: Decimal = Field(..., decimal_places=2, description="Monto mínimo a pagar")
-    MoraCuota: Decimal = Field(..., decimal_places=2, description="Monto de mora aplicado")
+    ImporteMinimoCuota: Decimal = Field(default=Decimal("0.00"), decimal_places=2, description="Monto mínimo a pagar")
+    MoraCuota: Decimal = Field(default=Decimal("0.00"), decimal_places=2, description="Monto de mora aplicado")
     ImporteComision: Decimal = Field(default=Decimal("0.00"), decimal_places=2, description="Comisión por cuota")
 
 

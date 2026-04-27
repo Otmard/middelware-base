@@ -13,6 +13,11 @@ class Settings(BaseSettings):
     ODOO_USERNAME: str
     ODOO_PASSWORD: str
 
+    LOGTO_URL: str
+    LOGTO_APP_ID: str
+    LOGTO_APP_SECRET: str
+    
+    
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
