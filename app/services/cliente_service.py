@@ -9,8 +9,6 @@ from app.core.error_registry import ErrorRegistry
 from app.core.odoo import get_odoo_connection
 from app.schemas.cliente import (
     ClienteRequest,
-    CargaUtilResponse,
-    HeadersResponse,
     Pago,
 )
 from app.core.response_handler import success_response, build_response
@@ -149,8 +147,8 @@ class ClienteService:
         return None
 
     def consultar_cliente(self, request: ClienteRequest) -> JSONResponse:
-        codigo_busqueda = request.CargaUtil.CodigoBusqueda
-        cod_servicio = request.CargaUtil.CodServicio
+        codigo_busqueda = request.CodigoBusqueda
+        cod_servicio = request.CodServicio
 
         logger.info(
             "Consultando cliente",

@@ -24,6 +24,6 @@ def consultar_cliente(
 ) -> JSONResponse:
     logger.info(
         "Received consulta-cliente request",
-        extra={"servicio": payload.CargaUtil.CodServicio}
+        extra={"servicio": payload.CodServicio}
     )
     return service.consultar_cliente(payload)
