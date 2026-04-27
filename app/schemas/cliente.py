@@ -23,13 +23,13 @@ class ClienteRequest(BaseModel):
 
 
 class Pago(BaseModel):
-    NumeroCuota: int = Field(..., description="Correlativo de la cuota")
-    DetalleCuota: str = Field(..., description="Descripción de la cuota/factura")
-    FechaVencimiento: Optional[str] = Field(None, description="Fecha límite de pago (AAAAMMDD)")
-    ImporteCuota: Decimal = Field(..., decimal_places=2, description="Monto total de la cuota")
-    ImporteMinimoCuota: Decimal = Field(default=Decimal("0.00"), decimal_places=2, description="Monto mínimo a pagar")
-    MoraCuota: Decimal = Field(default=Decimal("0.00"), decimal_places=2, description="Monto de mora aplicado")
-    ImporteComision: Decimal = Field(default=Decimal("0.00"), decimal_places=2, description="Comisión por cuota")
+    numeroCuota: int = Field(..., description="Correlativo de la cuota")
+    detalleCuota: str = Field(..., description="Descripción de la cuota/factura")
+    fechaVencimiento: Optional[str] = Field(None, description="Fecha límite de pago (AAAAMMDD)")
+    importeCuota: Decimal = Field(..., decimal_places=2, description="Monto total de la cuota")
+    importeMinimoCuota: Decimal = Field(default=Decimal("0.00"), decimal_places=2, description="Monto mínimo a pagar")
+    moraCuota: Decimal = Field(default=Decimal("0.00"), decimal_places=2, description="Monto de mora aplicado")
+    importeComision: Decimal = Field(default=Decimal("0.00"), decimal_places=2, description="Comisión por cuota")
 
 
 class HeadersResponse(BaseModel):

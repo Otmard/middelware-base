@@ -40,12 +40,13 @@ def custom_openapi():
         routes=app.routes,
     )
 
-    # 🧠 FORZAR esquema de error global
-    openapi_schema["components"]["schemas"]["ErrorResponse"] = {
+    # 🧠 FORZAR esquema de respuesta global estandarizada
+    openapi_schema["components"]["schemas"]["StandardResponse"] = {
         "type": "object",
         "properties": {
-            "code": {"type": "string"},
-            "message": {"type": "string"}
+            "code": {"type": "string", "description": "Código de respuesta"},
+            "message": {"type": "string", "description": "Mensaje descriptivo"},
+            "data": {"type": "object", "description": "Datos de respuesta", "nullable": True}
         },
         "required": ["code", "message"]
     }

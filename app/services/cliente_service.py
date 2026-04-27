@@ -9,11 +9,11 @@ from app.core.error_registry import ErrorRegistry
 from app.core.odoo import get_odoo_connection
 from app.schemas.cliente import (
     ClienteRequest,
-    ClienteResponse,
     CargaUtilResponse,
     HeadersResponse,
     Pago,
 )
+from app.core.response_handler import success_response, build_response
 from app.services.partner_odoo_service import PartnersOdooService
 from app.services.lead_odoo_service import LeadsOdooService
 from app.services.invoice_odoo_service import InvoicesOdooService
@@ -50,13 +50,13 @@ class ClienteService:
         pagos = []
         for idx, inv in enumerate(invoices):
             pagos.append(Pago(
-                NumeroCuota=idx,
-                DetalleCuota=inv.get("name", ""),
-                FechaVencimiento=self._format_date_odoo(inv.get("invoice_date_due")),
-                ImporteCuota=Decimal(str(inv.get("amount_total", 0))),
-                ImporteMinimoCuota=Decimal("0.00"),
-                MoraCuota=Decimal("0.00"),
-                ImporteComision=Decimal("0.00")
+                numeroCuota=idx,
+                detalleCuota=inv.get("name", ""),
+                fechaVencimiento=self._format_date_odoo(inv.get("invoice_date_due")),
+                importeCuota=Decimal(str(inv.get("amount_total", 0))),
+                importeMinimoCuota=Decimal("0.00"),
+                moraCuota=Decimal("0.00"),
+                importeComision=Decimal("0.00")
             ))
         return pagos
 
@@ -79,7 +79,7 @@ class ClienteService:
         cod_servicio: str,
         partner_data: Dict[str, Any],
         invoices: List[Dict[str, Any]] = None,
-    ) -> ClienteResponse:
+    ) -> JSONResponse:
         nombre = partner_data.get("name", "")
         invoices = invoices or []
         total_debt = self._calculate_total_debt(invoices)
@@ -90,43 +90,36 @@ class ClienteService:
             extra={"codigo": codigo_busqueda, "nombre": nombre, "total_deuda": str(total_debt), "nro_facturas": len(invoices)}
         )
 
-        return ClienteResponse(
-            Headers=HeadersResponse(
-                CodError="000",
-                Descripcion="PROCESO CONFORME"
-            ),
-            CargaUtil=CargaUtilResponse(
-                CodigoBusqueda=codigo_busqueda,
-                CodigoServicio=cod_servicio,
-                ImporteAdeudado=total_debt,
-                ImporteMinimo=Decimal("0.00"),
-                ImporteComision=Decimal("0.00"),
-                NombreCliente=nombre.upper(),
-                Pagos=pagos
-            )
-        )
+        data = {
+            "codigoBusqueda": codigo_busqueda,
+            "codigoServicio": cod_servicio,
+            "importeAdeudado": str(total_debt),
+            "importeMinimo": "0.00",
+            "importeComision": "0.00",
+            "nombreCliente": nombre.upper(),
+            "pagos": [pago.model_dump() for pago in pagos]
+        }
+
+        return build_response(code="000", message="PROCESO CONFORME", data=data)
 
     def _build_not_found_response(
         self,
         codigo_busqueda: str,
         cod_servicio: str,
-    ) -> ClienteResponse:
+    ) -> JSONResponse:
         logger.warning("Cliente not found", extra={"codigo": codigo_busqueda})
-        return ClienteResponse(
-            Headers=HeadersResponse(
-                CodError="301",
-                Descripcion="CÓDIGO DE DEPOSITANTE NO EXISTE"
-            ),
-            CargaUtil=CargaUtilResponse(
-                CodigoBusqueda=codigo_busqueda,
-                CodigoServicio=cod_servicio,
-                ImporteAdeudado=Decimal("0.00"),
-                ImporteMinimo=Decimal("0.00"),
-                ImporteComision=Decimal("0.00"),
-                NombreCliente="",
-                Pagos=[]
-            )
-        )
+
+        data = {
+            "codigoBusqueda": codigo_busqueda,
+            "codigoServicio": cod_servicio,
+            "importeAdeudado": "0.00",
+            "importeMinimo": "0.00",
+            "importeComision": "0.00",
+            "nombreCliente": "",
+            "pagos": []
+        }
+
+        return build_response(code="301", message="CÓDIGO DE DEPOSITANTE NO EXISTE", data=data)
 
     def _get_partner_by_id(self, codigo_busqueda: str) -> Dict[str, Any]:
         partner_id = int(codigo_busqueda)
@@ -155,7 +148,7 @@ class ClienteService:
             return self._get_partner_by_id(str(partner_id))
         return None
 
-    def consultar_cliente(self, request: ClienteRequest) -> ClienteResponse:
+    def consultar_cliente(self, request: ClienteRequest) -> JSONResponse:
         codigo_busqueda = request.CargaUtil.CodigoBusqueda
         cod_servicio = request.CargaUtil.CodServicio
 
