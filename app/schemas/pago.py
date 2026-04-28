@@ -12,14 +12,26 @@ class DetallePagoRequest(BaseModel):
 
 
 class PagoRequest(BaseModel):
-    id_transaccion: int = Field(..., description="ID único de transacción generado por la entidad bancaria")
-    fecha_pago: str = Field(..., pattern="^[0-9]{8}$", description="Fecha del pago en formato AAAAMMDD")
-    codigo_busqueda: str = Field(..., max_length=14, description="Código identificador del cliente")
+    id_transaccion: int = Field(
+        ..., description="ID único de transacción generado por la entidad bancaria"
+    )
+    fecha_pago: str = Field(
+        ..., pattern="^[0-9]{8}$", description="Fecha del pago en formato AAAAMMDD"
+    )
+    codigo_busqueda: str = Field(
+        ..., max_length=14, description="Código identificador del cliente"
+    )
     monto_total: float = Field(..., description="Monto total cancelado")
-    nombre_factura: Optional[str] = Field(None, max_length=40, description="Nombre para la factura")
+    nombre_factura: Optional[str] = Field(
+        None, max_length=40, description="Nombre para la factura"
+    )
     nit: Optional[str] = Field(None, max_length=8, description="NIT del cliente")
-    lugar_pago: Optional[str] = Field(None, max_length=10, description="Lugar donde se realizó el pago")
-    detalles: Optional[List[DetallePagoRequest]] = Field(default_factory=list, description="Detalles del pago")
+    lugar_pago: Optional[str] = Field(
+        None, max_length=10, description="Lugar donde se realizó el pago"
+    )
+    detalles: Optional[List[DetallePagoRequest]] = Field(
+        default_factory=list, description="Detalles del pago"
+    )
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -31,37 +43,77 @@ class PagoRequest(BaseModel):
                 "nombre_factura": "JUAN PEREZ",
                 "nit": "1234567",
                 "lugar_pago": "BCP",
-                "detalles": [
-                    {"numero_cuota": 1, "importe_cuota": 100.50}
-                ]
+                "detalles": [{"numero_cuota": 1, "importe_cuota": 100.50}],
             }
         }
     )
 
 
 class PagoDataResponse(BaseModel):
-    codigo_busqueda: str = Field(..., description="Código del cliente (igual al request)")
-    id_txn_empresa: str = Field(..., description="ID generado por la empresa (UUID)")
+    codigo_busqueda: str = Field(
+        ..., description="Código del cliente (igual al request)"
+    )
+    id_txn_empresa: str = Field(
+        ..., description="ID generado por la empresa (secuencial)"
+    )
     id_txn_entidad: int = Field(..., description="ID recibido desde la entidad/banco")
-    razon_social: Optional[str] = Field(None, max_length=36, description="Razón social de la empresa")
-    casa_matriz: Optional[str] = Field(None, max_length=15)
-    direccion: Optional[str] = Field(None, max_length=33)
-    telefono: Optional[str] = Field(None, max_length=20)
-    ciudad_dosificacion: Optional[str] = Field(None, max_length=20)
-    nit: Optional[str] = Field(None, max_length=15)
-    nro_autorizacion: Optional[str] = Field(None, max_length=15)
-    nro_factura: Optional[str] = Field(None, max_length=20)
-    actividad_economica: Optional[str] = Field(None, max_length=22)
-    hora_emision_fac: Optional[str] = Field(None, max_length=8)
-    fecha_emision_fac: Optional[str] = Field(None, max_length=10)
-    detalle_factura: Optional[str] = Field(None, max_length=40)
-    importe_original: Optional[str] = Field(None, max_length=11)
-    tipo_cambio: Optional[str] = Field(None, max_length=10)
-    importe_total: Optional[str] = Field(None, max_length=13)
-    literal_importe_total: Optional[str] = Field(None, max_length=69)
-    codigo_control: Optional[str] = Field(None, max_length=19)
-    fecha_lim_emision: Optional[str] = Field(None, max_length=10)
-    cadena_qr: Optional[str] = Field(None, description="Cadena para generar el código QR fiscal")
+    razon_social: Optional[str] = Field(
+        default="MAPLENET COMUNICACIONES S.A.",
+    )
+    casa_matriz: Optional[str] = Field(
+        default="MAPLENET COMUNICACIONES S.A.",
+    )
+    direccion: Optional[str] = Field(
+        default="Esquina calle 20 de calacoto y Gral. Inofuentes #1375",
+    )
+    telefono: Optional[str] = Field(
+        default="2779818",
+    )
+    ciudad_dosificacion: Optional[str] = Field(
+        default="La Paz",
+    )
+    nit: Optional[str] = Field(
+        default="550267024",
+    )
+    nro_autorizacion: Optional[str] = Field(
+        default="25A69AACD67CF02AACFDF044419C9FBE8C0E9E06A70E05AFD4FDBAF74",
+    )
+    nro_factura: Optional[str] = Field(
+        default=None,
+    )
+    actividad_economica: Optional[str] = Field(
+        default=None,
+    )
+    hora_emision_fac: Optional[str] = Field(
+        default=None,
+    )
+    fecha_emision_fac: Optional[str] = Field(
+        default=None,
+    )
+    detalle_factura: Optional[str] = Field(
+        default=None,
+    )
+    importe_original: Optional[str] = Field(
+        default=None,
+    )
+    tipo_cambio: Optional[str] = Field(
+        default=None,
+    )
+    importe_total: Optional[str] = Field(
+        default=None,
+    )
+    literal_importe_total: Optional[str] = Field(
+        default=None,
+    )
+    codigo_control: Optional[str] = Field(
+        default=None,
+    )
+    fecha_lim_emision: Optional[str] = Field(
+        default=None,
+    )
+    cadena_qr: Optional[str] = Field(
+        default=None, description="Cadena para generar el código QR fiscal"
+    )
 
 
 class PagoStandardResponse(BaseModel):
@@ -96,8 +148,8 @@ class PagoStandardResponse(BaseModel):
                     "literal_importe_total": None,
                     "codigo_control": None,
                     "fecha_lim_emision": None,
-                    "cadena_qr": None
-                }
+                    "cadena_qr": None,
+                },
             }
         }
     )

@@ -49,3 +49,4 @@ class InvoicesOdooService(BaseOdooService):
             fields=["amount_residual"]
         )
         return sum(inv.get("amount_residual", 0) for inv in invoices)
+
