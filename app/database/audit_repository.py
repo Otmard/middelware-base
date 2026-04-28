@@ -4,7 +4,7 @@ import json
 from uuid import uuid4
 from datetime import datetime
 from sqlmodel import select
-from app.database.models import Audit, PagoRequest, PagoResponse, ClienteRequest, ClienteResponse
+from app.database.models import Audit, PagoRequest, PagoDetalle, PagoResponse, ClienteRequest, ClienteResponse
 from app.database.database import async_session_maker
 
 
@@ -51,11 +51,23 @@ class AuditRepository:
                 nombre_factura=data.get("nombre_factura"),
                 nit=data.get("nit"),
                 lugar_pago=data.get("lugar_pago"),
-                detalles=json.dumps(data.get("detalles")) if data.get("detalles") else None,
             )
             session.add(pago_req)
             await session.commit()
             await session.refresh(pago_req)
+            
+            detalles = data.get("detalles", [])
+            for det in detalles:
+                detalle = PagoDetalle(
+                    pago_request_id=pago_req.id,
+                    numero_cuota=det.get("numero_cuota"),
+                    importe_cuota=det.get("importe_cuota"),
+                )
+                session.add(detalle)
+            
+            if detalles:
+                await session.commit()
+            
             return pago_req
 
     @staticmethod

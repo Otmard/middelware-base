@@ -36,7 +36,16 @@ class PagoRequest(AuditBase, table=True):
     nombre_factura: Optional[str] = Field(default=None)
     nit: Optional[str] = Field(default=None)
     lugar_pago: Optional[str] = Field(default=None)
-    detalles: Optional[str] = Field(default=None)
+    created_at: datetime = Field(default_factory=datetime.utcnow, index=True)
+
+
+class PagoDetalle(AuditBase, table=True):
+    __tablename__ = "pago_detalle"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    pago_request_id: Optional[int] = Field(default=None, foreign_key="pago_request.id")
+    numero_cuota: int
+    importe_cuota: float
     created_at: datetime = Field(default_factory=datetime.utcnow, index=True)
 
 
