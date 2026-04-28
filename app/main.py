@@ -21,6 +21,8 @@ from app.schemas.cliente import StandardResponse
 async def lifespan(app: FastAPI):
     # 🔥 STARTUP
     await redis_client.connect()
+    from app.database.database import init_db
+    await init_db()
 
     yield
 
@@ -101,10 +103,10 @@ logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
 
 # middleware
 app.middleware("http")(logging_middleware)
-app.include_router(user.router)
+# app.include_router(user.router)
 app.include_router(cliente.router)
-app.include_router(test_auth_router.router)
 app.include_router(pago.router)
+app.include_router(test_auth_router.router)
 # handlers globales
 
 app.add_exception_handler(AppException, app_exception_handler)

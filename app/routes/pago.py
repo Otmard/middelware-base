@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 from app.core.logger import get_logger
 from app.schemas.pago import PagoRequest, PagoStandardResponse, PagoDataResponse
 from app.services.pago_service import PagoService
+import json
 
 router = APIRouter(prefix="/pagos", tags=["Pagos"])
 logger = get_logger(__name__)
@@ -19,7 +20,7 @@ def get_pago_service():
     response_model=PagoStandardResponse,
     status_code=status.HTTP_200_OK,
 )
-def procesar_pago(
+async def procesar_pago(
     payload: PagoRequest,
     service: PagoService = Depends(get_pago_service),
 ) -> PagoStandardResponse:
@@ -28,8 +29,10 @@ def procesar_pago(
         extra={"codigo_busqueda": payload.codigo_busqueda}
     )
 
-    data = service.procesar_pago(payload)
-
+    request_dict = payload.model_dump()
+    
+    data = await service.procesar_pago(payload, request_dict)
+    
     return PagoStandardResponse(
         code="000",
         message="PROCESO CONFORME",

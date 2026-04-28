@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     # Redis
     REDIS_URL: str
 
+    # Database
+    DATABASE_URL: str = "postgresql://ubuntu:ubuntu@localhost:5432/db_partners"
+
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", extra="ignore"
     )

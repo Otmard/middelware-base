@@ -47,4 +47,6 @@ uvicorn==0.42.0
 uvloop==0.22.1; platform_system != "Windows"
 watchfiles==1.1.1
 websockets==16.0
+sqlmodel==0.0.14
+asyncpg==0.30.0
 gunicorn

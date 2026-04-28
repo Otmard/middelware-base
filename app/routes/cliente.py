@@ -18,7 +18,7 @@ def get_cliente_service():
     response_model=ClienteStandardResponse,
     status_code=status.HTTP_200_OK,
 )
-def consultar_cliente(
+async def consultar_cliente(
     payload: ClienteRequest,
     service: ClienteService = Depends(get_cliente_service),
 ) -> ClienteStandardResponse:
@@ -26,4 +26,7 @@ def consultar_cliente(
         "Received consulta-cliente request",
         extra={"servicio": payload.CodServicio}
     )
-    return service.consultar_cliente(payload)
+    
+    request_dict = payload.model_dump()
+    
+    return await service.consultar_cliente(payload, request_dict)
