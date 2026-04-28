@@ -28,10 +28,12 @@ class InvoicesOdooService(BaseOdooService):
             ["move_type", "=", move_type],
             ["payment_state", "=", payment_state],
         ]
+        
         default_fields = ["id", "name", "invoice_date_due", "amount_total"]
         return self.search_read(
             domain=domain,
             fields=fields or default_fields,
+            order="id desc",
         )
 
     def get_total_debt_by_partner(

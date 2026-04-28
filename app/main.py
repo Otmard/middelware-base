@@ -43,45 +43,6 @@ def custom_openapi():
         routes=app.routes,
     )
 
-    # Agregar ejemplos completos a las rutas
-    if "/pagos/procesar" in openapi_schema["paths"]:
-        openapi_schema["paths"]["/pagos/procesar"]["post"]["responses"]["200"] = {
-            "description": "Pago procesado correctamente",
-            "content": {
-                "application/json": {
-                    "schema": {"$ref": "#/components/schemas/PagoStandardResponse"},
-                    "example": {
-                        "code": "000",
-                        "message": "PROCESO CONFORME",
-                        "data": {
-                            "codigo_busqueda": "1231231231",
-                            "id_txn_empresa": "550e8400-e29b-41d4-a716-446655440000",
-                            "id_txn_entidad": 123456789,
-                            "razon_social": None,
-                            "casa_matriz": None,
-                            "direccion": None,
-                            "telefono": None,
-                            "ciudad_dosificacion": None,
-                            "nit": None,
-                            "nro_autorizacion": None,
-                            "nro_factura": None,
-                            "actividad_economica": None,
-                            "hora_emision_fac": None,
-                            "fecha_emision_fac": None,
-                            "detalle_factura": None,
-                            "importe_original": None,
-                            "tipo_cambio": None,
-                            "importe_total": None,
-                            "literal_importe_total": None,
-                            "codigo_control": None,
-                            "fecha_lim_emision": None,
-                            "cadena_qr": None
-                        }
-                    }
-                }
-            }
-        }
-
     app.openapi_schema = openapi_schema
     return app.openapi_schema
 

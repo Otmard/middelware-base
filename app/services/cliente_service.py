@@ -42,23 +42,30 @@ class ClienteService:
             fields=[
                 "id",
                 "name",
+                "vr_numero_factura",
                 "invoice_date_due",
-                "amount_total"
-            ]
+                "amount_total",
+            ],
+            
         )
 
     def _build_pagos_from_invoices(self, invoices: List[Dict[str, Any]]) -> List[Pago]:
         pagos = []
         for idx, inv in enumerate(invoices):
-            pagos.append(Pago(
-                numeroCuota=idx,
-                detalleCuota=inv.get("name", ""),
-                fechaVencimiento=self._format_date_odoo(inv.get("invoice_date_due")),
-                importeCuota=Decimal(str(inv.get("amount_total", 0))),
-                importeMinimoCuota=Decimal("0.00"),
-                moraCuota=Decimal("0.00"),
-                importeComision=Decimal("0.00")
-            ))
+            print(inv)
+            pagos.append(
+                Pago(
+                    numeroCuota=inv.get("id"),
+                    detalleCuota=f"{inv.get('vr_numero_factura', '')} {inv.get('name', '')}",
+                    fechaVencimiento=self._format_date_odoo(
+                        inv.get("invoice_date_due")
+                    ),
+                    importeCuota=Decimal(str(inv.get("amount_total", 0))),
+                    importeMinimoCuota=Decimal("0.00"),
+                    moraCuota=Decimal("0.00"),
+                    importeComision=Decimal("0.00"),
+                )
+            )
         return pagos
 
     def _format_date_odoo(self, date_value: Any) -> str:
@@ -69,13 +76,13 @@ class ClienteService:
         return str(date_value)
 
     def _calculate_total_debt(self, invoices: List[Dict[str, Any]]) -> Decimal:
-        return sum(
-            Decimal(str(inv.get("amount_total", 0)))
-            for inv in invoices
-        )
+        return sum(Decimal(str(inv.get("amount_total", 0))) for inv in invoices)
 
-    async def _save_audit(self, endpoint: str, method: str, response_dict: dict, request_dict: dict = None):
+    async def _save_audit(
+        self, endpoint: str, method: str, response_dict: dict, request_dict: dict = None
+    ):
         from decimal import Decimal
+
         def convert_value(v):
             if isinstance(v, Decimal):
                 return str(v)
@@ -84,12 +91,16 @@ class ClienteService:
             if isinstance(v, dict):
                 return {kk: convert_value(vv) for kk, vv in v.items()}
             return v
-        
+
         try:
-            request_dict_clean = {k: convert_value(v) for k, v in request_dict.items()} if request_dict else {}
-            
+            request_dict_clean = (
+                {k: convert_value(v) for k, v in request_dict.items()}
+                if request_dict
+                else {}
+            )
+
             response_for_audit = {k: convert_value(v) for k, v in response_dict.items()}
-            
+
             audit = await self.audit_repo.create_audit(
                 endpoint=endpoint,
                 method=method,
@@ -97,18 +108,23 @@ class ClienteService:
                 response_body=response_for_audit,
                 status_code=200,
             )
-            
+
             if request_dict_clean:
-                await self.audit_repo.create_cliente_request(audit.id, request_dict_clean)
-            
+                await self.audit_repo.create_cliente_request(
+                    audit.id, request_dict_clean
+                )
+
             data = response_dict.get("data", {})
             if data:
                 await self.audit_repo.create_cliente_response(audit.id, data)
-                
+
             logger.info("Audit saved", extra={"audit_id": audit.id})
         except Exception as e:
             import traceback
-            logger.error(f"Error saving audit: {e}", extra={"trace": traceback.format_exc()})
+
+            logger.error(
+                f"Error saving audit: {e}", extra={"trace": traceback.format_exc()}
+            )
 
     async def _build_success_response(
         self,
@@ -125,7 +141,12 @@ class ClienteService:
 
         logger.info(
             "Building success response",
-            extra={"codigo": codigo_busqueda, "nombre": nombre, "total_deuda": str(total_debt), "nro_facturas": len(invoices)}
+            extra={
+                "codigo": codigo_busqueda,
+                "nombre": nombre,
+                "total_deuda": str(total_debt),
+                "nro_facturas": len(invoices),
+            },
         )
 
         data = ClienteDataResponse(
@@ -135,18 +156,22 @@ class ClienteService:
             importeMinimo="0.00",
             importeComision="0.00",
             nombreCliente=nombre.upper(),
-            pagos=pagos
+            pagos=pagos,
         )
 
         response_dict = {
             "code": "000",
             "message": "PROCESO CONFORME",
-            "data": data.model_dump()
+            "data": data.model_dump(),
         }
-        
-        await self._save_audit("/api/consulta-cliente", "POST", response_dict, request_dict)
 
-        return ClienteStandardResponse(code="000", message="PROCESO CONFORME", data=data)
+        await self._save_audit(
+            "/api/consulta-cliente", "POST", response_dict, request_dict
+        )
+
+        return ClienteStandardResponse(
+            code="000", message="PROCESO CONFORME", data=data
+        )
 
     async def _build_not_found_response(
         self,
@@ -163,24 +188,28 @@ class ClienteService:
             importeMinimo="0.00",
             importeComision="0.00",
             nombreCliente="",
-            pagos=[]
+            pagos=[],
         )
 
         response_dict = {
             "code": "301",
             "message": "CÓDIGO DE DEPOSITANTE NO EXISTE",
-            "data": data.model_dump()
+            "data": data.model_dump(),
         }
-        
-        await self._save_audit("/api/consulta-cliente", "POST", response_dict, request_dict)
 
-        return ClienteStandardResponse(code="301", message="CÓDIGO DE DEPOSITANTE NO EXISTE", data=data)
+        await self._save_audit(
+            "/api/consulta-cliente", "POST", response_dict, request_dict
+        )
+
+        return ClienteStandardResponse(
+            code="301", message="CÓDIGO DE DEPOSITANTE NO EXISTE", data=data
+        )
 
     def _get_partner_by_id(self, codigo_busqueda: str) -> Dict[str, Any]:
         partner_id = int(codigo_busqueda)
         result = self.partner_service.get(
             record_ids=[partner_id],
-            fields=["id", "name", "ref", "vat", "email", "phone"]
+            fields=["id", "name", "ref", "vat", "email", "phone"],
         )
         return result[0] if result else None
 
@@ -188,28 +217,29 @@ class ClienteService:
         result = self.partner_service.search_read(
             domain=[["vat", "=", codigo_busqueda]],
             fields=["id", "name", "ref", "vat", "email", "phone"],
-            limit=1
+            limit=1,
         )
         return result[0] if result else None
 
     def _get_partner_by_lead(self, codigo_busqueda: str) -> Dict[str, Any]:
         lead_id = int(codigo_busqueda)
         lead = self.lead_service.get(
-            record_ids=[lead_id],
-            fields=["id", "name", "partner_id"]
+            record_ids=[lead_id], fields=["id", "name", "partner_id"]
         )
         if lead and lead[0].get("partner_id"):
             partner_id = lead[0]["partner_id"][0]
             return self._get_partner_by_id(str(partner_id))
         return None
 
-    async def consultar_cliente(self, request: ClienteRequest, request_dict: dict) -> ClienteStandardResponse:
+    async def consultar_cliente(
+        self, request: ClienteRequest, request_dict: dict
+    ) -> ClienteStandardResponse:
         codigo_busqueda = request.CodigoBusqueda
         cod_servicio = request.CodServicio
 
         logger.info(
             "Consultando cliente",
-            extra={"codigo": codigo_busqueda, "servicio": cod_servicio}
+            extra={"codigo": codigo_busqueda, "servicio": cod_servicio},
         )
 
         try:
@@ -231,17 +261,26 @@ class ClienteService:
                     partner = None
 
             else:
-                logger.warning("CodServicio no válido", extra={"cod_servicio": cod_servicio})
+                logger.warning(
+                    "CodServicio no válido", extra={"cod_servicio": cod_servicio}
+                )
 
             if not partner:
-                return await self._build_not_found_response(codigo_busqueda, cod_servicio, request_dict)
+                return await self._build_not_found_response(
+                    codigo_busqueda, cod_servicio, request_dict
+                )
 
             invoices = self._get_invoices_by_partner(partner["id"])
 
-            return await self._build_success_response(codigo_busqueda, cod_servicio, partner, invoices, request_dict)
+            return await self._build_success_response(
+                codigo_busqueda, cod_servicio, partner, invoices, request_dict
+            )
 
         except AppException:
             raise
         except Exception as e:
-            logger.error("Error consultando cliente", extra={"error": str(e), "codigo": codigo_busqueda})
+            logger.error(
+                "Error consultando cliente",
+                extra={"error": str(e), "codigo": codigo_busqueda},
+            )
             raise AppException(ErrorRegistry.ODOO_CONNECTION_FAILED)
